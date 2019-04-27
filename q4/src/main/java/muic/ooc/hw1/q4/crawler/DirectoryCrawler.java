@@ -16,15 +16,11 @@ import java.io.*;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static muic.ooc.hw1.q4.crawler.DirectoryStringFixer.*;
 
 
 public class DirectoryCrawler{
-
-//    final static String TAGS_FILTER = "(?:href=\"|src=\")(.+?)(?:\")";
 
 
     public static void DownloadFilesFromUrl(String rootUrl, String targetFolder){
@@ -40,7 +36,6 @@ public class DirectoryCrawler{
         HttpClient httpClient = HttpClientBuilder.create().build();
 
         dirsToVisit.add("index.html");
-        int counter = 0;
 
         while(!dirsToVisit.isEmpty()){
 
@@ -54,14 +49,10 @@ public class DirectoryCrawler{
                 HttpResponse response = httpClient.execute(httpGet);
                 InputStream inputStream = response.getEntity().getContent();
 
-//                System.out.print("Saving file: " + currentDir);
                 File file = new File(targetFolder + currentDir);
 
                 performTasks(inputStream, file, currentUrl, currentDir, dirsToVisit, dirsInQueue);
-
-//                System.out.println(" done");
-//                counter++;
-//                System.out.println("Files saved: " + counter);
+                System.out.println("Processed: " + currentDir);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -75,24 +66,25 @@ public class DirectoryCrawler{
 
         System.out.println();
         System.out.println("Done, time taken = " + (endTime - startTime)/1000 + " seconds");
-        System.out.println("Number of files: " + counter);
 
     }
 
 
     private static void performTasks(InputStream inputStream, File outputFile, String currentUrl, String currentDir, LinkedList<String> dirsToVisit, Set<String> dirsInQueue) {
-        saveFile(inputStream, outputFile);
         if(FilenameUtils.isExtension(currentUrl, "html"))
             scanHtmlFile(inputStream, outputFile, currentDir, dirsToVisit, dirsInQueue);
+        else saveFile(inputStream, outputFile);
     }
 
 
     private static void saveFile(InputStream inputStream, File outputFile) {
         try {
-            FileUtils.forceMkdirParent(outputFile);
-            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outputFile));
-            IOUtils.copy(inputStream, bos);
-            bos.close();
+            if(!outputFile.isDirectory()) {
+                FileUtils.forceMkdirParent(outputFile);
+                BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+                IOUtils.copy(inputStream, bos);
+                bos.close();
+            }
         } catch(Exception e){
             e.printStackTrace();
         }
@@ -101,95 +93,36 @@ public class DirectoryCrawler{
 
     private static void scanHtmlFile(InputStream inputStream, File outputFile, String currentDir, LinkedList<String> dirsToVisit, Set<String> dirsInQueue){
 
-//        BufferedReader br;
-//        BufferedWriter bw;
-//
-//        try {
-//
-//            FileUtils.forceMkdirParent(outputFile);
-//            br = new BufferedReader(new InputStreamReader(inputStream));
-//            bw = new BufferedWriter(new FileWriter(outputFile));
-//            String line;
-//
-//            while((line = br.readLine()) != null) {
-//
-//                bw.write(line);
-//
-//                Document doc = Jsoup.parse(line);
-//
-//                Elements hrefLinks = doc.select("[href]");
-//                Elements srcLinks = doc.select("[src]");
-//
-//                for (Element elt : hrefLinks) {
-//                    String newDir = elt.attr("href");
-//                    String newLink = connectUrl(currentDir, newDir);
-//                    addToQueue(newLink, newDir, dirsToVisit, dirsInQueue);
-//                }
-//
-//                for (Element elt : srcLinks) {
-//                    String newDir = elt.attr("src");
-//                    String newLink = connectUrl(currentDir, newDir);
-//                    addToQueue(newLink, newDir, dirsToVisit, dirsInQueue);
-//                }
-//
-//            }
-//
-//            bw.close();
-//            br.close();
-//
-//        } catch (Exception e){
-//            e.printStackTrace();
-//        }
-
-//        BufferedReader br;
-//        BufferedWriter bw;
-//
-//        try {
-//
-//            FileUtils.forceMkdirParent(outputFile);
-//            br = new BufferedReader(new InputStreamReader(inputStream));
-//            bw = new BufferedWriter(new FileWriter(outputFile));
-//            String line;
-//
-//            while((line = br.readLine()) != null) {
-//
-//                bw.write(line);
-//
-//                Matcher matcher = Pattern.compile(TAGS_FILTER).matcher(line);
-//
-//                while(matcher.find()) {
-//                    String newDir = matcher.group(1);
-//                    String newLink = connectUrl(currentDir, newDir);
-//                    addToQueue(newLink, newDir, dirsToVisit, dirsInQueue);
-//                }
-//
-//            }
-//
-//            bw.close();
-//            br.close();
-//
-//        } catch (Exception e){
-//            e.printStackTrace();
-//        }
+        BufferedReader br;
+        BufferedWriter bw;
 
         try {
 
-            Document doc = Jsoup.parse(outputFile, "UTF-8");
+            FileUtils.forceMkdirParent(outputFile);
+            br = new BufferedReader(new InputStreamReader(inputStream));
+            bw = new BufferedWriter(new FileWriter(outputFile));
+            String line;
 
-            Elements hrefLinks = doc.select("[href]");
-            Elements srcLinks = doc.select("[src]");
+            while((line = br.readLine()) != null) {
 
-            for (Element elt : hrefLinks) {
-                String newDir = elt.attr("href");
-                String newLink = connectUrl(currentDir, newDir);
-                addToQueue(newLink, newDir, dirsToVisit, dirsInQueue);
+                bw.write(line);
+
+                Document doc = Jsoup.parse(line);
+
+                Elements links = doc.select("[href],[src]");
+
+                for (Element elt : links) {
+                    String newDir;
+                    if(elt.hasAttr("href")) newDir = elt.attr("href");
+                    else newDir = elt.attr("src");
+                    String newLink = connectUrl(currentDir, newDir);
+                    addToQueue(newLink, newDir, dirsToVisit, dirsInQueue);
+                }
+
             }
 
-            for (Element elt : srcLinks) {
-                String newDir = elt.attr("src");
-                String newLink = connectUrl(currentDir, newDir);
-                addToQueue(newLink, newDir, dirsToVisit, dirsInQueue);
-            }
+            bw.close();
+            br.close();
 
         } catch (Exception e){
             e.printStackTrace();
