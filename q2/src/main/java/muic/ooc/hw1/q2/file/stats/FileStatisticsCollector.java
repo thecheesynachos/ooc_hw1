@@ -1,4 +1,4 @@
-package muic.ooc.hw1.q1.file.stats;
+package muic.ooc.hw1.q2.file.stats;
 
 import org.apache.commons.io.DirectoryWalker;
 import java.io.File;
@@ -18,6 +18,15 @@ public class FileStatisticsCollector extends DirectoryWalker {
         fileCounter = 0;
         extensionsCounter = new Hashtable<String, Integer>();
         startDirectory = new File(pathname);
+        this.gatherFiles();
+    }
+
+    public FileStatisticsCollector() {
+        super();
+        directoryCounter = 0;
+        fileCounter = 0;
+        extensionsCounter = new Hashtable<String, Integer>();
+        startDirectory = new File("/Volumes/DOCUMENTS/CS Stuff/OOC/hw1_outputs/docs");
         this.gatherFiles();
     }
 
@@ -42,15 +51,18 @@ public class FileStatisticsCollector extends DirectoryWalker {
         results.add(file);
         String fileName = file.getName();
         // if statement to exclude files without extensions in count
+        String extension;
         if(fileName.contains(".")) {
             // get the extension out from the file, and make it case insensitive
             // +1 to exclude the period
-            String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-            if (extensionsCounter.containsKey(extension)) {
-                extensionsCounter.put(extension, extensionsCounter.get(extension) + 1);
-            } else {
-                extensionsCounter.put(extension, 1);
-            }
+            extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+        } else{
+            extension = "<no extension>";
+        }
+        if (extensionsCounter.containsKey(extension)) {
+            extensionsCounter.put(extension, extensionsCounter.get(extension) + 1);
+        } else {
+            extensionsCounter.put(extension, 1);
         }
         fileCounter++;
     }
