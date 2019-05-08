@@ -25,7 +25,20 @@ import static muic.ooc.hw1.q4.crawler.DirectoryStringFixer.*;
 
 public class DirectoryCrawler{
 
-    public static void DownloadFilesFromUrl(String rootUrl, String targetFolder){
+    private long counter = 0;
+    private LinkedList<String> dirsToVisit = new LinkedList<String>();
+    private Set<String> dirsInQueue = new HashSet<String>();
+    private String rootUrl;
+    private String targetFolder;
+    private HttpClient httpClient;
+
+    public DirectoryCrawler(String rootUrl, String targetFolder){
+        this.rootUrl = rootUrl;
+        this.targetFolder = targetFolder;
+    }
+
+
+    public void DownloadFilesFromUrl(){
 
         System.out.println("Crawling from " + rootUrl);
         System.out.println("Saving to " + targetFolder);
@@ -33,11 +46,7 @@ public class DirectoryCrawler{
 
         long startTime = System.currentTimeMillis();
 
-        Counter counter = new Counter();
-
-        LinkedList<String> dirsToVisit = new LinkedList<String>();
-        Set<String> dirsInQueue = new HashSet<String>();
-        HttpClient httpClient = HttpClientBuilder.create().build();
+        httpClient = HttpClientBuilder.create().build();
 
         dirsToVisit.add("index.html");
 
@@ -52,19 +61,18 @@ public class DirectoryCrawler{
 
                 HttpResponse response = httpClient.execute(httpGet);
                 HttpEntity entity = response.getEntity();
-                InputStream inputStream = entity.getContent();
 
                 File file = new File(targetFolder + currentDir);
 
-                performTasks(inputStream, file, currentUrl, currentDir, dirsToVisit, dirsInQueue, counter);
+                performTasks(entity, file, currentUrl, currentDir);
                 System.out.println("Processed: " + currentDir);
 
                 EntityUtils.consume(entity);
 
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                httpGet.releaseConnection();
+//            } finally {
+//                httpGet.releaseConnection();
             }
 
         }
@@ -73,26 +81,22 @@ public class DirectoryCrawler{
 
         System.out.println();
         System.out.println("Done, time taken = " + (endTime - startTime)/1000 + " seconds");
-        System.out.println("Total word count = " + counter.getCount());
+        System.out.println("Total word count = " + counter);
 
     }
 
 
-    private static void performTasks(InputStream inputStream, File outputFile, String currentUrl, String currentDir,
-                                     LinkedList<String> dirsToVisit, Set<String> dirsInQueue, Counter counter) {
-        saveFile(inputStream, outputFile);
+    private void performTasks(HttpEntity entity, File outputFile, String currentUrl, String currentDir) {
+        saveFile(entity, outputFile);
         if(FilenameUtils.isExtension(currentUrl, "html"))
-            scanHtmlFile(outputFile, currentDir, dirsToVisit, dirsInQueue, counter);
+            scanHtmlFile(outputFile, currentDir);
     }
 
 
-    private static void saveFile(InputStream inputStream, File outputFile) {
+    private void saveFile(HttpEntity entity, File outputFile) {
         try {
             if(!outputFile.isDirectory()) {
-                FileUtils.forceMkdirParent(outputFile);
-                BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outputFile));
-                IOUtils.copy(inputStream, bos);
-                bos.close();
+                entity.writeTo(new FileOutputStream(outputFile));
             }
         } catch(Exception e){
             e.printStackTrace();
@@ -100,8 +104,7 @@ public class DirectoryCrawler{
     }
 
 
-    private static void scanHtmlFile(File outputFile, String currentDir, LinkedList<String> dirsToVisit,
-                                     Set<String> dirsInQueue, Counter counter){
+    private void scanHtmlFile(File outputFile, String currentDir){
 
         try {
 
@@ -114,54 +117,29 @@ public class DirectoryCrawler{
                 if(elt.hasAttr("href")) newDir = elt.attr("href");
                 else newDir = elt.attr("src");
                 String newLink = connectUrl(currentDir, newDir);
-                addToQueue(newLink, newDir, dirsToVisit, dirsInQueue);
+                if (!newDir.startsWith("http") && !dirsInQueue.contains(newLink)) {
+                    dirsToVisit.add(newLink);
+                    dirsInQueue.add(newLink);
+                }
 
             }
 
-            countWords(doc, counter);
+            countWords(doc);
 
         } catch (Exception e){
             e.printStackTrace();
         }
 
-
     }
 
 
-    private static void addToQueue(String newLink, String newDir, LinkedList<String> dirsToVisit, Set<String> dirsInQueue){
-        if (!newDir.startsWith("http") && !dirsInQueue.contains(newLink)) {
-            dirsToVisit.add(newLink);
-            dirsInQueue.add(newLink);
-        }
-    }
-
-
-    private static void countWords(Document doc, Counter counter){
+    private void countWords(Document doc){
 
         String cleanedString = Jsoup.clean(doc.toString(), Whitelist.none());
         String[] words = cleanedString.split("\\s+");
-        counter.addCount(words.length);
+        counter += words.length;
 
     }
 
-
-}
-
-
-class Counter{
-
-    long count;
-
-    Counter(){
-        count = 0;
-    }
-
-    void addCount(long num){
-        count += num;
-    }
-
-    long getCount(){
-        return count;
-    }
 
 }

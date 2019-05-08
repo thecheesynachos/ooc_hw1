@@ -2,7 +2,7 @@ package muic.ooc.hw1.q1.file.stats;
 
 public class FileStatisticsPresenter {
 
-    FileStatisticsCollector fileStatisticsCollector;
+    private FileStatisticsCollector fileStatisticsCollector;
 
     public FileStatisticsPresenter(String startDirectory){
         fileStatisticsCollector = new FileStatisticsCollector(startDirectory);

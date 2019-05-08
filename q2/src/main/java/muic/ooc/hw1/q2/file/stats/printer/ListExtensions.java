@@ -4,20 +4,20 @@ import muic.ooc.hw1.q2.file.stats.FileStatisticsCollector;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
-public class ListExtensions implements StatisticsPresenter {
+public class ListExtensions extends StatisticsPresenter {
 
-    private Option option = new Option("d", "list-exts", false, "list all unique extensions");
+    @Override
+    protected Option createOption() {
+        return new Option("d", "list-exts", false, "list all unique extensions");
+    }
 
-    public String getResultString(FileStatisticsCollector fsc, CommandLine cmd) {
+    public String getResultString(FileStatisticsCollector fsc) {
         StringBuilder sb = new StringBuilder().append("Unique extensions: \n");
         for(String ext : fsc.getExtensionsCounter().keySet()){
             sb.append(ext).append("\n");
         }
+        sb.setLength(sb.length() - 1);
         return sb.toString();
-    }
-
-    public Option getOption() {
-        return option;
     }
 
 }

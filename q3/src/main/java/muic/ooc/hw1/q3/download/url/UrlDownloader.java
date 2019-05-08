@@ -12,6 +12,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class UrlDownloader {
 
@@ -22,33 +24,27 @@ public class UrlDownloader {
             // writes to file using built-in function copyUrlToFile
             FileUtils.copyURLToFile(url, new File(targetFile));
         } catch(Exception e){
-            System.err.println(e.getMessage());
+            e.printStackTrace();
         }
 
     }
 
     public static void downloadUrlMethod2(String urlLink, String targetFile){
 
-        BufferedWriter writer = null;
-        BufferedReader reader = null;
+        InputStream inputStream = null;
 
         try {
-            // create BufferedWriter to file in specified location
-            writer = new BufferedWriter(new FileWriter(targetFile));
-            // create connection to url and BufferedReader from that location
             URLConnection urlConnection = new URL(urlLink).openConnection();
-            reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+            inputStream = urlConnection.getInputStream();
             // keep writing lines from the url to the file until runs out
-            String inputLine;
-            while ((inputLine = reader.readLine()) != null) writer.write(inputLine);
+            Files.copy(inputStream, FileUtils.getFile(targetFile).toPath());
         } catch(Exception e){
             System.err.println(e.getMessage());
         } finally {
             try {
-                if (writer != null) writer.close();
-                if (reader != null) reader.close();
+                if (inputStream != null) inputStream.close();
             } catch(Exception e){
-                System.err.println(e.getMessage());
+                e.printStackTrace();
             }
         }
 
@@ -67,26 +63,26 @@ public class UrlDownloader {
                 // writes the content from the entity into a file
                 File file = new File(targetFile);
                 FileUtils.forceMkdirParent(file);
-                BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-                IOUtils.copy(inputStream, bos);
-                bos.close();
+                FileOutputStream fos = new FileOutputStream(file);
+                IOUtils.copy(inputStream, fos);
+                fos.close();
             }
         } catch (Exception e){
-            System.err.println(e.getMessage());
+            e.printStackTrace();
         }
 
     }
 
     public static void main(String[] args) {
 
-        String tocUrl = "https://cs.muic.mahidol.ac.th/courses/ooc/docs/index.html";
-        UrlDownloader.downloadUrlMethod1(tocUrl, "/Volumes/DOCUMENTS/CS Stuff/OOC/hw1/test_folder/test1.html");
-        UrlDownloader.downloadUrlMethod2(tocUrl, "/Volumes/DOCUMENTS/CS Stuff/OOC/hw1/test_folder/test2.html");
-        UrlDownloader.downloadUrlMethod3(tocUrl, "/Volumes/DOCUMENTS/CS Stuff/OOC/hw1/test_folder/test3.html");
+//        String tocUrl = "https://cs.muic.mahidol.ac.th/courses/ooc/docs/index.html";
+//        UrlDownloader.downloadUrlMethod1(tocUrl, "/Volumes/DOCUMENTS/CS Stuff/OOC/hw1/test_folder/test1.html");
+//        UrlDownloader.downloadUrlMethod2(tocUrl, "/Volumes/DOCUMENTS/CS Stuff/OOC/hw1/test_folder/test2.html");
+//        UrlDownloader.downloadUrlMethod3(tocUrl, "/Volumes/DOCUMENTS/CS Stuff/OOC/hw1/test_folder/test3.html");
 
         // the last one works on any files
-        UrlDownloader.downloadUrlMethod3("https://cs.muic.mahidol.ac.th/courses/ooc/docs/images/javalogo.gif",
-                "/Volumes/DOCUMENTS/CS Stuff/OOC/hw1/test_folder/test_img.gif");
+        UrlDownloader.downloadUrlMethod2("https://cs.muic.mahidol.ac.th/courses/ooc/docs/images/javalogo.gif",
+                "/Volumes/DOCUMENTS/CS Stuff/OOC/hw1/test_folder/test_img2.gif");
 
     }
 

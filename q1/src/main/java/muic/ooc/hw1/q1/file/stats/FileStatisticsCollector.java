@@ -9,14 +9,14 @@ public class FileStatisticsCollector extends DirectoryWalker {
 
     private int directoryCounter;
     private int fileCounter;
-    private Hashtable<String, Integer> extensionsCounter;
+    private Map<String, Integer> extensionsCounter;
     private File startDirectory;
 
     public FileStatisticsCollector(String pathname) {
         super();
         directoryCounter = 0;
         fileCounter = 0;
-        extensionsCounter = new Hashtable<String, Integer>();
+        extensionsCounter = new HashMap<String, Integer>();
         startDirectory = new File(pathname);
         this.gatherFiles();
     }
@@ -66,7 +66,7 @@ public class FileStatisticsCollector extends DirectoryWalker {
         return fileCounter;
     }
 
-    public Hashtable<String, Integer> getExtensionsCounter() {
+    public Map<String, Integer> getExtensionsCounter() {
         return extensionsCounter;
     }
 

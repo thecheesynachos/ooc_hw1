@@ -1,20 +1,32 @@
 package muic.ooc.hw1.q2.commandline;
 
-import muic.ooc.hw1.q2.file.stats.FileStatisticsCollector;
 import muic.ooc.hw1.q2.file.stats.printer.StatisticsPresenter;
 import org.apache.commons.cli.*;
 
+import java.util.ArrayList;
+
 public class StatsCommandsParser{
 
-    public static void processCommands(CommandLine cmd, StatisticsPresenter[] statisticsPresenters){
-        FileStatisticsCollector fsc = new FileStatisticsCollector();
+    public static ArrayList<StatisticsPresenter> processCommands(CommandLine cmd, StatisticsPresenter[] statisticsPresenters){
+
+        ArrayList<StatisticsPresenter> presentStatPresenters = new ArrayList<StatisticsPresenter>();
+
         for(StatisticsPresenter sp : statisticsPresenters){
-            if(sp.getOption().getOpt() != null && cmd.hasOption(sp.getOption().getOpt())){
-                System.out.println(sp.getResultString(fsc, cmd));
-            } else if(sp.getOption().getLongOpt() != null && cmd.hasOption(sp.getOption().getLongOpt())){
-                System.out.println(sp.getResultString(fsc, cmd));
+
+            String shortOpt = sp.getOption().getOpt();
+            String longOpt = sp.getOption().getLongOpt();
+
+            if(shortOpt != null && cmd.hasOption(shortOpt)){
+                if(sp.getOption().hasArg()) sp.setArgument(cmd.getOptionValue(shortOpt));
+                presentStatPresenters.add(sp);
+            } else if(longOpt != null && cmd.hasOption(longOpt)){
+                if(sp.getOption().hasArg()) sp.setArgument(cmd.getOptionValue(longOpt));
+                presentStatPresenters.add(sp);
             }
+
         }
+
+        return presentStatPresenters;
 
     }
 
