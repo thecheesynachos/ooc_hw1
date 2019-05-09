@@ -96,6 +96,7 @@ public class DirectoryCrawler{
     private void saveFile(HttpEntity entity, File outputFile) {
         try {
             if(!outputFile.isDirectory()) {
+                FileUtils.forceMkdirParent(outputFile);
                 entity.writeTo(new FileOutputStream(outputFile));
             }
         } catch(Exception e){
